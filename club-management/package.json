@@ -1,0 +1,11 @@
+{
+  "name": "club-management",
+  "private": true,
+  "version": "1.0.0",
+  "description": "MERN Club Management monorepo",
+  "scripts": {
+    "start:backend": "npm --prefix backend run start",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:frontend": "npm --prefix frontend run dev"
+  }
+}

@@ -1,0 +1,131 @@
+import express from 'express';
+import multer from 'multer';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { auth } from '../middleware/auth.js';
+import { requireRole } from '../middleware/roles.js';
+import Payment from '../models/Payment.js';
+import User from '../models/User.js';
+
+const router = express.Router();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const storage = multer.diskStorage({
+  destination: path.join(__dirname, '..', 'uploads'),
+  filename: (_, file, cb) => cb(null, Date.now() + '-' + file.originalname)
+});
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
+  fileFilter: (_, file, cb) => {
+    const ok = ['image/png', 'image/jpeg', 'image/jpg', 'application/pdf'].includes(file.mimetype);
+    cb(ok ? null : new Error('Only PNG/JPEG/PDF allowed'), ok);
+  }
+});
+
+router.use(auth);
+
+router.get('/me', async (req, res, next) => {
+  try {
+    const payments = await Payment.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.json(payments);
+  } catch (e) { next(e); }
+});
+
+// Admin: payments of a specific user
+router.get('/user/:id', requireRole('admin'), async (req, res, next) => {
+  try {
+    const payments = await Payment.find({ user: req.params.id }).sort({ createdAt: -1 });
+    res.json(payments);
+  } catch (e) { next(e); }
+});
+
+router.post('/submit', upload.single('proof'), async (req, res, next) => {
+  try {
+    const { month, amount } = req.body;
+    // Validate month format YYYY-MM
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(String(month || ''))) {
+      return res.status(400).json({ message: 'month must be in format YYYY-MM' });
+    }
+    const user = await User.findById(req.user.id);
+    let finalAmount = amount !== undefined && amount !== null && String(amount) !== '' ? Number(amount) : user.fixedAmount;
+    if (!Number.isFinite(finalAmount) || finalAmount <= 0) {
+      return res.status(400).json({ message: 'amount must be a positive number' });
+    }
+
+    const update = {
+      amount: finalAmount,
+      status: 'completed',
+      proofPath: req.file ? `/uploads/${req.file.filename}` : undefined
+    };
+    const payment = await Payment.findOneAndUpdate(
+      { user: req.user.id, month },
+      update,
+      { upsert: true, new: true, setDefaultsOnInsert: true }
+    );
+    res.status(201).json(payment);
+  } catch (e) { next(e); }
+});
+
+router.get('/', async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const query = status ? { status } : {};
+    const results = await Payment.find(query).populate('user', 'name email username avatarUrl').sort({ createdAt: -1 });
+    res.json(results);
+  } catch (e) { next(e); }
+});
+
+// Admin: list users who have NOT completed payment for given month
+router.get('/unpaid', auth, requireRole('admin'), async (req, res, next) => {
+  try {
+    const month = String(req.query.month || '');
+    if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(month)) {
+      return res.status(400).json({ message: 'month must be in format YYYY-MM' });
+    }
+    // Find users with a completed payment for the month
+    const paid = await Payment.find({ month, status: 'completed' }).select('user');
+    const paidIds = new Set(paid.map(p => String(p.user)));
+    // All users not in paidIds are unpaid (includes pending or no record)
+    const users = await User.find({ _id: { $nin: Array.from(paidIds) } }).select('name email fixedAmount username avatarUrl');
+    res.json({ month, users });
+  } catch (e) { next(e); }
+});
+
+// Admin: mark a payment status and optionally adjust amount
+router.patch('/:id/mark', auth, requireRole('admin'), async (req, res, next) => {
+  try {
+    const { status, amount } = req.body;
+    if (!['pending', 'completed'].includes(status)) {
+      return res.status(400).json({ message: 'status must be "pending" or "completed"' });
+    }
+    const update = { status };
+    if (amount !== undefined) {
+      const n = Number(amount);
+      if (!Number.isFinite(n) || n <= 0) return res.status(400).json({ message: 'amount must be a positive number' });
+      update.amount = n;
+    }
+    const payment = await Payment.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!payment) return res.status(404).json({ message: 'Payment not found' });
+    res.json(payment);
+  } catch (e) { next(e); }
+});
+
+// Authenticated: total payments summary (optionally filter by status)
+router.get('/total', auth, async (req, res, next) => {
+  try {
+    const { status } = req.query;
+    const match = status ? { status } : {};
+    const agg = await Payment.aggregate([
+      { $match: match },
+      { $group: { _id: null, total: { $sum: '$amount' }, count: { $sum: 1 } } }
+    ]);
+    const row = agg[0] || { total: 0, count: 0 };
+    res.json({ total: row.total || 0, count: row.count || 0 });
+  } catch (e) { next(e); }
+});
+
+export default router;
+
