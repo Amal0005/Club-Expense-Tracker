@@ -7,6 +7,7 @@ import Input from '../components/ui/Input.jsx'
 import Button from '../components/ui/Button.jsx'
 import Upload from '../components/ui/Upload.jsx'
 import DocumentPreviewModal from '../components/DocumentPreviewModal.jsx'
+import { formatDMY } from '../utils/formatDate'
 
 export default function Expenses() {
   const [items, setItems] = useState([])
@@ -99,7 +100,7 @@ export default function Expenses() {
                 </div>
                 <div>
                   <div className="text-xs text-gray-500 mb-1">Date</div>
-                  <div className="text-sm">{new Date(x.date).toLocaleDateString()}</div>
+                  <div className="text-sm">{formatDMY(x.date)}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500 mb-1">Note</div>
@@ -116,7 +117,7 @@ export default function Expenses() {
                       <Button
                         variant="subtle"
                         className="flex-1"
-                        onClick={()=> setPreview({ open:true, url: href, title: `Expense • ${new Date(x.date).toLocaleDateString()}` })}
+                        onClick={()=> setPreview({ open:true, url: href, title: `Expense • ${formatDMY(x.date)}` })}
                       >
                         View Document
                       </Button>
@@ -152,7 +153,7 @@ export default function Expenses() {
                 <tr key={x._id} className="border-t">
                   <td className="py-2">{x.type}</td>
                   <td>₹{x.amount}</td>
-                  <td>{new Date(x.date).toLocaleDateString()}</td>
+                  <td>{formatDMY(x.date)}</td>
                   <td>{x.note||'-'}</td>
                   <td>
                     {x.proofUrl ? (
@@ -163,7 +164,7 @@ export default function Expenses() {
                           <button
                             type="button"
                             className="inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
-                            onClick={()=> setPreview({ open:true, url: href, title: `Expense • ${new Date(x.date).toLocaleDateString()}` })}
+                            onClick={()=> setPreview({ open:true, url: href, title: `Expense • ${formatDMY(x.date)}` })}
                           >
                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                               <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />

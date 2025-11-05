@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import api from '../api/axios'
+import { formatDMY } from '../utils/formatDate'
 
 export default function AdminDashboard() {
   const [stats, setStats] = useState({
@@ -26,7 +27,7 @@ export default function AdminDashboard() {
       const expenseTotal = expenseRes.data?.total || 0
       const balance = income - expenseTotal
       setStats({
-        users: u.data.length,
+        users: Array.isArray(u.data) ? u.data.filter(it => it.role === 'user').length : 0,
         payments: p.data.length,
         expenses: e.data.length,
         income,
@@ -176,7 +177,7 @@ export default function AdminDashboard() {
               <div key={it.id || it._id} className="py-3 flex items-center justify-between">
                 <div>
                   <div className="text-sm font-medium text-gray-900">{it.title || it.name || 'Expense'}</div>
-                  <div className="text-xs text-gray-500">{new Date(it.date || it.createdAt || Date.now()).toLocaleDateString()}</div>
+                  <span className="text-xs text-gray-500 whitespace-nowrap">{formatDMY(it.date)}</span>
                 </div>
                 <div className="text-sm font-semibold text-red-700">{currency(it.amount || 0)}</div>
               </div>

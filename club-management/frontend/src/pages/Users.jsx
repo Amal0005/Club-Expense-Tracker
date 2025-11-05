@@ -10,7 +10,7 @@ import DocumentPreviewModal from '../components/DocumentPreviewModal.jsx'
 
 export default function Users() {
   const [users, setUsers] = useState([])
-  const [form, setForm] = useState({ name: '', username: '', email: '', password: '', fixedAmount: 0, role: 'user' })
+  const [form, setForm] = useState({ name: '', username: '', email: '', password: '', fixedAmount: null, role: 'user' })
   const [avatarFile, setAvatarFile] = useState(null)
   const [msg, setMsg] = useState('')
   const toast = useToast()
@@ -109,16 +109,18 @@ export default function Users() {
     } finally { setSavingPw(false) }
   }
 
+  const filteredUsers = Array.isArray(users) ? users.filter(u => u.role === 'user') : []
+
   return (
     <div className="grid gap-6">
       <Card className="p-4">
         <h2 className="font-semibold mb-3">Create User</h2>
         {msg && <p className="text-sm text-red-600 mb-2">{msg}</p>}
-        <form onSubmit={createUser} className="grid md:grid-cols-7 gap-3 items-end">
-          <Input placeholder="Name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
-          <Input placeholder="Username" value={form.username} onChange={e=>setForm({...form,username:e.target.value})} />
-          <Input placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} />
-          <Input placeholder="Password" type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} />
+        <form onSubmit={createUser} className="grid md:grid-cols-7 gap-3 items-end" autoComplete="off">
+          <Input placeholder="Name" autoComplete="off" name="new-name" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} />
+          <Input placeholder="Username" autoComplete="off" name="new-username" value={form.username} onChange={e=>setForm({...form,username:e.target.value})} />
+          <Input placeholder="Email" autoComplete="off" name="new-email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} />
+          <Input placeholder="Password" type="password" autoComplete="new-password" name="new-password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} />
           <Input placeholder="Fixed Amount" type="number" value={form.fixedAmount} onChange={e=>setForm({...form,fixedAmount:Number(e.target.value)})} />
           <Upload accept="image/*" value={avatarFile} onChange={setAvatarFile} buttonText="Avatar" />
           <div className="flex gap-2">
@@ -135,7 +137,7 @@ export default function Users() {
         <h2 className="font-semibold mb-3">All Users</h2>
         {/* Mobile: card list */}
         <div className="sm:hidden space-y-3">
-          {users.map(u => (
+          {filteredUsers.map(u => (
             <div key={u._id} className="border rounded-lg p-3 shadow-sm">
               <div className="flex items-center gap-3">
                 {u.avatarUrl ? (
@@ -161,10 +163,9 @@ export default function Users() {
                 <div className="grid grid-cols-2 gap-2">
                   <div>
                     <div className="text-xs text-gray-500 mb-1">Role</div>
-                    <select className="w-full border rounded px-2 py-2 text-sm" value={u.role} onChange={e=>updateUser(u._id,{ role: e.target.value })}>
-                      <option value="user">user</option>
-                      <option value="admin">admin</option>
-                    </select>
+                    <div className="w-full border rounded px-2 py-2 text-sm bg-gray-50 text-gray-700 capitalize select-none">
+                      {u.role}
+                    </div>
                   </div>
                   <div>
                     <div className="text-xs text-gray-500 mb-1">Fixed Amount</div>
@@ -179,7 +180,7 @@ export default function Users() {
               </div>
             </div>
           ))}
-          {users.length===0 && (
+          {filteredUsers.length===0 && (
             <div className="py-3 text-gray-500 text-sm text-center">No users</div>
           )}
         </div>
@@ -199,7 +200,7 @@ export default function Users() {
             </tr>
           </thead>
           <tbody>
-            {users.map(u => (
+            {filteredUsers.map(u => (
               <tr key={u._id} className="border-t">
                 <td className="py-2">
                   {u.avatarUrl ? (
@@ -218,10 +219,7 @@ export default function Users() {
                 </td>
                 <td className="hidden sm:table-cell">{u.email}</td>
                 <td>
-                  <select className="border rounded px-2 py-1" value={u.role} onChange={e=>updateUser(u._id,{ role: e.target.value })}>
-                    <option value="user">user</option>
-                    <option value="admin">admin</option>
-                  </select>
+                  <span className="inline-block border rounded px-2 py-1 bg-gray-50 text-gray-700 capitalize select-none">{u.role}</span>
                 </td>
                 <td className="hidden sm:table-cell">
                   <Input className="w-24" type="number" defaultValue={u.fixedAmount||0} onBlur={e=>updateUser(u._id,{ fixedAmount: Number(e.target.value) })} />
@@ -234,7 +232,7 @@ export default function Users() {
                 </td>
               </tr>
             ))}
-            {users.length===0 && (
+            {filteredUsers.length===0 && (
               <tr><td className="py-3 text-gray-500" colSpan={7}>No users</td></tr>
             )}
           </tbody>
@@ -263,7 +261,27 @@ export default function Users() {
                   const currentMonthKey = `${year}-${String(now.getMonth()+1).padStart(2,'0')}`
                   const months = Array.from({ length: 12 }).map((_, i) => `${year}-${String(i+1).padStart(2,'0')}`)
                   const paidMap = new Map(payments.map(p => [p.month, p]))
-                  const due = months.filter(m => m.localeCompare(currentMonthKey) < 0 && !(paidMap.has(m) && paidMap.get(m).status === 'completed')).length
+                  // Determine effective join month
+                  const rawCreated = selected?.createdAt || selected?.joinedAt || selected?.created_at || null
+                  const createdAt = rawCreated ? new Date(rawCreated) : null
+                  const joinMonthFromUser = createdAt ? `${createdAt.getFullYear()}-${String(createdAt.getMonth()+1).padStart(2,'0')}` : null
+                  const earliestHistoryMonth = (() => {
+                    if (!Array.isArray(payments) || payments.length === 0) return null
+                    let min = payments[0].month
+                    for (const r of payments) {
+                      if (typeof r.month === 'string' && r.month.localeCompare(min) < 0) min = r.month
+                    }
+                    return min
+                  })()
+                  const effectiveJoinMonthKey = joinMonthFromUser || earliestHistoryMonth || currentMonthKey
+                  const isEligibleMonth = (mKey) => {
+                    const joinYear = Number(effectiveJoinMonthKey.slice(0,4))
+                    if (joinYear > year) return false
+                    if (joinYear < year) return true
+                    return mKey.localeCompare(effectiveJoinMonthKey) >= 0
+                  }
+                  const visibleMonths = months.filter(m => isEligibleMonth(m))
+                  const due = visibleMonths.filter(m => m.localeCompare(currentMonthKey) < 0 && !(paidMap.has(m) && paidMap.get(m).status === 'completed')).length
                   const totalDue = (selected.fixedAmount || 0) * due
                   return (
                     <div className="mt-2">
@@ -271,7 +289,7 @@ export default function Users() {
                       <div className="text-xs text-gray-500 mt-1">₹{selected.fixedAmount||0} × {due} months</div>
                       <div className="mt-3 max-h-40 overflow-auto">
                         <ul className="text-xs leading-6">
-                          {months.map(m => (
+                          {visibleMonths.map(m => (
                             <li key={m} className="flex items-center justify-between">
                               <span>{m}</span>
                               <span className={`text-xs ${paidMap.has(m) && paidMap.get(m).status==='completed' ? 'text-green-700' : (m.localeCompare(currentMonthKey)<0 ? 'text-red-700' : 'text-gray-400')}`}>

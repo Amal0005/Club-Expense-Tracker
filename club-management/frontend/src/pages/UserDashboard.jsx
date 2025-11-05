@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import api from '../api/axios'
 import { useAuth } from '../context/AuthContext.jsx'
 import DocumentPreviewModal from '../components/DocumentPreviewModal.jsx'
+import { formatDMY } from '../utils/formatDate'
 
 export default function UserDashboard() {
   const [latest, setLatest] = useState([])
@@ -42,7 +43,27 @@ export default function UserDashboard() {
   const months = Array.from({ length: 12 }).map((_, i) => `${currentYear}-${String(i+1).padStart(2,'0')}`)
   const paidMap = new Map(payments.map(p => [p.month, p]))
   const compareMonthKey = (a, b) => a.localeCompare(b)
-  const dueCount = months.filter(m => compareMonthKey(m, currentMonthKey) < 0 && !(paidMap.has(m) && paidMap.get(m).status === 'completed')).length
+  // Determine effective join month (YYYY-MM)
+  const rawCreated = user?.createdAt || user?.joinedAt || user?.created_at || null
+  const createdAt = rawCreated ? new Date(rawCreated) : null
+  const joinMonthKeyFromUser = createdAt ? `${createdAt.getFullYear()}-${String(createdAt.getMonth()+1).padStart(2,'0')}` : null
+  const earliestHistoryMonth = (() => {
+    if (!Array.isArray(payments) || payments.length === 0) return null
+    let min = payments[0].month
+    for (const r of payments) {
+      if (typeof r.month === 'string' && r.month.localeCompare(min) < 0) min = r.month
+    }
+    return min
+  })()
+  const effectiveJoinMonthKey = joinMonthKeyFromUser || earliestHistoryMonth || currentMonthKey
+  const isEligibleMonth = (mKey) => {
+    const joinYear = Number(effectiveJoinMonthKey.slice(0,4))
+    if (joinYear > currentYear) return false
+    if (joinYear < currentYear) return true
+    return mKey.localeCompare(effectiveJoinMonthKey) >= 0
+  }
+  const visibleMonths = months.filter(m => isEligibleMonth(m))
+  const dueCount = visibleMonths.filter(m => compareMonthKey(m, currentMonthKey) < 0 && !(paidMap.has(m) && paidMap.get(m).status === 'completed')).length
   const totalDue = (user?.fixedAmount || 0) * dueCount
 
   const paidMonthsThisYear = months.filter(m => paidMap.has(m) && paidMap.get(m)?.status === 'completed').length
@@ -191,7 +212,7 @@ export default function UserDashboard() {
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${badge}`}>{e.type}</span>
                   )
                 })()}
-                <span className="text-xs text-gray-500 whitespace-nowrap">{new Date(e.date).toLocaleDateString()}</span>
+                <span className="text-xs text-gray-500 whitespace-nowrap">{formatDMY(e.date)}</span>
               </div>
               {e.note ? <div className="text-sm text-gray-700 mt-2 line-clamp-2">{e.note}</div> : <div className="h-1.5" />}
               <div className="mt-3 flex items-center justify-between">
@@ -235,7 +256,7 @@ export default function UserDashboard() {
               <div key={p._id || p.id || p.month} className="py-3 flex items-center justify-between">
                 <div>
                   <div className="text-sm font-medium text-gray-900">{p.month || 'Payment'}</div>
-                  <div className="text-xs text-gray-500">{new Date(p.date || p.createdAt || Date.now()).toLocaleDateString()}</div>
+                  <div className="text-xs text-gray-500">{formatDMY(p.date || p.createdAt || Date.now())}</div>
                 </div>
                 <div className="text-sm font-semibold text-emerald-700">₹{Number(p.amount)||0}</div>
               </div>

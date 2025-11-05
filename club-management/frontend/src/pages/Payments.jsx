@@ -6,6 +6,7 @@ import Card from '../components/ui/Card.jsx'
 import Input from '../components/ui/Input.jsx'
 import Button from '../components/ui/Button.jsx'
 import DocumentPreviewModal from '../components/DocumentPreviewModal.jsx'
+import { formatMonthYear, formatDMY } from '../utils/formatDate'
 
 export default function Payments() {
   const [items, setItems] = useState([])
@@ -95,7 +96,7 @@ export default function Payments() {
               <div className="mt-3 grid grid-cols-2 gap-2">
                 <div>
                   <div className="text-xs text-gray-500 mb-1">Month</div>
-                  <div className="text-sm">{p.month}</div>
+                  <div className="text-sm">{formatMonthYear(p.month)}</div>
                 </div>
                 <div>
                   <div className="text-xs text-gray-500 mb-1">Amount</div>
@@ -105,6 +106,13 @@ export default function Payments() {
 
               {mode === 'all' && (
                 <div className="mt-3 grid gap-2">
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <div className="text-xs text-gray-500 mb-1">Paid On</div>
+                      <div className="text-sm">{p.date || p.createdAt ? formatDMY(p.date || p.createdAt) : '-'}</div>
+                    </div>
+                    <div></div>
+                  </div>
                   <div className="flex items-center justify-between">
                     <div className="text-xs text-gray-500">Status</div>
                     <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${p.status==='completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
@@ -120,7 +128,7 @@ export default function Payments() {
                           <Button
                             variant="subtle"
                             className="flex-1"
-                            onClick={()=> setPreview({ open:true, url: href, title: `${p.user?.name || 'User'} • ${p.month}` })}
+                            onClick={()=> setPreview({ open:true, url: href, title: `${p.user?.name || 'User'} • ${formatMonthYear(p.month)}` })}
                           >
                             View Document
                           </Button>
@@ -152,7 +160,7 @@ export default function Payments() {
               <th className="py-2">User</th>
               <th>Month</th>
               <th>Amount</th>
-              {mode === 'all' && (<><th>Status</th><th className="text-right">Proof</th><th className="text-right">Action</th></>)}
+              {mode === 'all' && (<><th>Paid On</th><th>Status</th><th className="text-right">Proof</th><th className="text-right">Action</th></>)}
             </tr>
           </thead>
           <tbody>
@@ -175,10 +183,11 @@ export default function Payments() {
                     </div>
                   </div>
                 </td>
-                <td>{p.month}</td>
+                <td>{formatMonthYear(p.month)}</td>
                 <td>₹{p.amount}</td>
                 {mode === 'all' ? (
                   <>
+                    <td>{p.date || p.createdAt ? formatDMY(p.date || p.createdAt) : '-'}</td>
                     <td className="align-middle">
                       <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${p.status==='completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
                         {p.status==='completed' ? 'Completed' : 'Pending'}
@@ -193,7 +202,7 @@ export default function Payments() {
                             <button
                               type="button"
                               className="inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
-                              onClick={()=> setPreview({ open:true, url: href, title: `${p.user?.name || 'User'} • ${p.month}` })}
+                              onClick={()=> setPreview({ open:true, url: href, title: `${p.user?.name || 'User'} • ${formatMonthYear(p.month)}` })}
                             >
                               <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" /></svg>
                               View Document
