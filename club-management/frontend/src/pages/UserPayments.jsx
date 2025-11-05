@@ -50,10 +50,40 @@ export default function UserPayments() {
 
   const compareMonthKey = (a, b) => a.localeCompare(b)
 
+  // Determine user's effective join month (YYYY-MM)
+  const rawCreated = user?.createdAt || user?.joinedAt || user?.created_at || null
+  const createdAt = rawCreated ? new Date(rawCreated) : null
+  const joinMonthKeyFromUser = createdAt ? `${createdAt.getFullYear()}-${String(createdAt.getMonth()+1).padStart(2,'0')}` : null
+  // Fallback: if no created date, infer from earliest payment record month; if none, use current month
+  const earliestHistoryMonth = useMemo(() => {
+    if (!history || !history.length) return null
+    let min = history[0].month
+    for (const r of history) {
+      if (typeof r.month === 'string' && r.month.localeCompare(min) < 0) min = r.month
+    }
+    return min
+  }, [history])
+  const effectiveJoinMonthKey = joinMonthKeyFromUser || earliestHistoryMonth || currentMonthKey
+
+  const isEligibleMonth = (monthKey) => {
+    // Allow only months on/after effective join month within the same year or later years
+    const joinYear = Number(effectiveJoinMonthKey.slice(0,4))
+    if (joinYear > currentYear) return false
+    if (joinYear < currentYear) return true
+    return monthKey.localeCompare(effectiveJoinMonthKey) >= 0
+  }
+
   const dueMonths = useMemo(() => {
-    return months.filter(m => compareMonthKey(m.key, currentMonthKey) < 0 && !(paidMap.has(m.key) && paidMap.get(m.key).status === 'completed'))
-  }, [months, paidMap, currentMonthKey])
+    return months.filter(m =>
+      isEligibleMonth(m.key) &&
+      compareMonthKey(m.key, currentMonthKey) < 0 &&
+      !(paidMap.has(m.key) && paidMap.get(m.key).status === 'completed')
+    )
+  }, [months, paidMap, currentMonthKey, effectiveJoinMonthKey])
   const totalDue = (user?.fixedAmount || 0) * dueMonths.length
+
+  // Only render months that are eligible (on/after join month)
+  const visibleMonths = useMemo(() => months.filter(m => isEligibleMonth(m.key)), [months, effectiveJoinMonthKey])
 
   const settleAll = async () => {
     if (!dueMonths.length) return
@@ -127,11 +157,12 @@ export default function UserPayments() {
         </div>
         {msg && <p className="text-sm text-red-600 mb-2">{msg}</p>}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-          {months.map(m => {
+          {visibleMonths.map(m => {
             const record = paidMap.get(m.key)
             const paid = !!record && record.status === 'completed'
             const pending = !!record && record.status === 'pending'
             const isPast = compareMonthKey(m.key, currentMonthKey) < 0
+            const eligible = isEligibleMonth(m.key)
             const statusIcon = paid ? '✓' : (pending ? '•' : (isPast ? '✗' : '•'))
             const statusColor = paid ? 'text-green-600' : (pending ? 'text-amber-600' : (isPast ? 'text-red-600' : 'text-gray-400'))
             const proof = record?.proofPath || null
@@ -141,7 +172,9 @@ export default function UserPayments() {
                   <div className="font-medium">{m.label}</div>
                   <div className={`${statusColor} font-bold`}>{statusIcon}</div>
                 </div>
-                {paid ? (
+                {!eligible ? (
+                  <div className="text-xs text-gray-500">Not applicable (joined after this month)</div>
+                ) : paid ? (
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-green-700">Paid</span>
                     {proof && (() => {
@@ -185,18 +218,19 @@ export default function UserPayments() {
                   <div className="flex flex-col gap-2">
                     <Upload
                       accept="image/*,application/pdf"
-                      value={fileByMonth[m.key]}
-                      onChange={(f)=> setFileByMonth(prev => ({ ...prev, [m.key]: f }))}
+                      value={eligible ? fileByMonth[m.key] : null}
+                      onChange={(f)=> eligible && setFileByMonth(prev => ({ ...prev, [m.key]: f }))}
                       buttonText="Attach Proof"
                     />
                     <button
-                      disabled={!fileByMonth[m.key] || !!uploadingMonth}
-                      onClick={()=>submitPayment(m.key)}
+                      disabled={!eligible || !fileByMonth[m.key] || !!uploadingMonth}
+                      onClick={()=> eligible && submitPayment(m.key)}
                       className="bg-gray-900 text-white px-3 py-2 rounded disabled:opacity-50 text-sm"
                     >{uploadingMonth===m.key ? 'Submitting...' : 'Submit for Approval'}</button>
                     {!fileByMonth[m.key] && <p className="text-xs text-gray-500">Document required</p>}
-                    {!isPast && <p className="text-xs text-gray-500">Upcoming month</p>}
-                    {isPast && <p className="text-xs text-red-600">Past due</p>}
+                    {!eligible && <p className="text-xs text-gray-500">Not allowed before join date</p>}
+                    {eligible && !isPast && <p className="text-xs text-gray-500">Upcoming month</p>}
+                    {eligible && isPast && <p className="text-xs text-red-600">Past due</p>}
                   </div>
                 )}
               </div>

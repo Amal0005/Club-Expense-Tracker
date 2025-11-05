@@ -54,11 +54,9 @@ function Nav() {
                 <img
                   src="/Nanma_logo.png"
                   alt="Nanma Club"
-                  className="relative z-10 h-full w-full p-1.5 object-contain"
+                  className="relative z-10 h-12px w-15px p-5 object-contain"
                 />
-                <span className="absolute inset-0 z-20 grid place-items-center translate-y-7 text-sm font-semibold tracking-tight text-gray-900/90 select-none pointer-events-none">
-                  NANMA
-                </span>
+             
               </div>
             </Link>
           </div>
@@ -176,75 +174,83 @@ function Nav() {
         </div>
       </nav>
       {open && (
-        <div className="sm:hidden border-b border-gray-200 px-4 py-3 space-y-3 bg-white/90 backdrop-blur">
-          {user?.role === "admin" ? (
-            <div className="flex flex-col gap-2">
-              <Link
-                to="/admin"
-                className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
-              >
-                Admin
-              </Link>
-              <Link
-                to="/admin/users"
-                className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
-              >
-                Users
-              </Link>
-              <Link
-                to="/admin/expenses"
-                className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
-              >
-                Expenses
-              </Link>
-              <Link
-                to="/admin/payments"
-                className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
-              >
-                Payments
-              </Link>
-            </div>
-          ) : (
-            user && (
+        <div className="sm:hidden fixed inset-0 z-50">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-0 h-full w-80 max-w-[85%] bg-white shadow-xl border-l border-gray-200 overflow-auto px-4 py-4 space-y-3">
+            {user?.role === "admin" ? (
               <div className="flex flex-col gap-2">
                 <Link
-                  to="/payments"
+                  to="/admin"
                   className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
+                  onClick={() => setOpen(false)}
                 >
-                  My Payments
+                  Admin
+                </Link>
+                <Link
+                  to="/admin/users"
+                  className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
+                  onClick={() => setOpen(false)}
+                >
+                  Users
+                </Link>
+                <Link
+                  to="/admin/expenses"
+                  className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
+                  onClick={() => setOpen(false)}
+                >
+                  Expenses
+                </Link>
+                <Link
+                  to="/admin/payments"
+                  className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
+                  onClick={() => setOpen(false)}
+                >
+                  Payments
                 </Link>
               </div>
-            )
-          )}
-          <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
-            {user ? (
-              <>
-                <div className="flex items-center gap-2">
-                  <div className="w-8 h-8 rounded-full bg-gray-200 ring-2 ring-gray-200" />
-                  <span className="text-sm text-gray-700">{user.name}</span>
-                </div>
-                <Button
-                  size="sm"
-                  onClick={async () => {
-                    const ok = await confirm({
-                      title: "Logout",
-                      message: "Do you really want to logout?",
-                      confirmText: "Logout",
-                    });
-                    if (!ok) return;
-                    logout();
-                    toast.success("Logged out");
-                    setOpen(false);
-                  }}
-                >
-                  Logout
-                </Button>
-              </>
             ) : (
-              <Button as={Link} to="/login" variant="subtle" size="sm">
-                Login
-              </Button>
+              user && (
+                <div className="flex flex-col gap-2">
+                  <Link
+                    to="/payments"
+                    className="px-3 py-2 rounded-lg text-sm text-gray-700 hover:text-brand-700 hover:bg-brand-50"
+                    onClick={() => setOpen(false)}
+                  >
+                    My Payments
+                  </Link>
+                </div>
+              )
             )}
+            <div className="pt-2 border-t border-gray-100 flex items-center justify-between">
+              {user ? (
+                <>
+                  <div className="flex items-center gap-2">
+                    <div className="w-8 h-8 rounded-full bg-gray-200 ring-2 ring-gray-200" />
+                    <span className="text-sm text-gray-700">{user.name}</span>
+                  </div>
+                  <Button
+                    size="sm"
+                    onClick={async () => {
+                      const ok = await confirm({
+                        title: "Logout",
+                        message: "Do you really want to logout?",
+                        confirmText: "Logout",
+                      });
+                      if (!ok) return;
+                      logout();
+                      toast.success("Logged out");
+                      setOpen(false);
+                    }}
+                  >
+                    Logout
+                  </Button>
+                </>
+              ) : (
+                <Button as={Link} to="/login" variant="subtle" size="sm" onClick={() => setOpen(false)}>
+                  Login
+                </Button>
+              )}
+            </div>
           </div>
         </div>
       )}

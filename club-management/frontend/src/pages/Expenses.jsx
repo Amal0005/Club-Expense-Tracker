@@ -84,50 +84,103 @@ export default function Expenses() {
       <Card className="p-4">
         <h2 className="font-semibold mb-3">Recent Expenses</h2>
         <DocumentPreviewModal open={preview.open} url={preview.url} title={preview.title} onClose={()=>setPreview({ open:false, url:'', title:'' })} />
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="text-left text-gray-500">
-              <th className="py-2">Type</th>
-              <th>Amount</th>
-              <th>Date</th>
-              <th>Note</th>
-              <th>Proof</th>
-              <th className="text-right">Action</th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map(x => (
-              <tr key={x._id} className="border-t">
-                <td className="py-2">{x.type}</td>
-                <td>₹{x.amount}</td>
-                <td>{new Date(x.date).toLocaleDateString()}</td>
-                <td>{x.note||'-'}</td>
-                <td>
-                  {x.proofUrl ? (
-                    (() => {
-                      const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                      const href = `${apiBase}${x.proofUrl}`
-                      return (
-                        <button
-                          type="button"
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
-                          onClick={()=> setPreview({ open:true, url: href, title: `Expense • ${new Date(x.date).toLocaleDateString()}` })}
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
-                            <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
-                          </svg>
-                          View
-                        </button>
-                      )
-                    })()
-                  ) : '-'}
-                </td>
-                <td className="text-right whitespace-nowrap align-middle"><Button variant="danger" className="h-8 px-3" onClick={()=>deleteExpense(x._id)}>Delete</Button></td>
+        {/* Mobile: card list */}
+        <div className="sm:hidden space-y-3">
+          {items.map(x => (
+            <div key={x._id} className="border rounded-lg p-3 shadow-sm">
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">Type</div>
+                  <div className="text-sm font-medium">{x.type || '-'}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">Amount</div>
+                  <div className="text-sm">₹{x.amount}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">Date</div>
+                  <div className="text-sm">{new Date(x.date).toLocaleDateString()}</div>
+                </div>
+                <div>
+                  <div className="text-xs text-gray-500 mb-1">Note</div>
+                  <div className="text-sm truncate">{x.note || '-'}</div>
+                </div>
+              </div>
+
+              <div className="mt-3 flex items-center gap-2">
+                {x.proofUrl ? (
+                  (() => {
+                    const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
+                    const href = `${apiBase}${x.proofUrl}`
+                    return (
+                      <Button
+                        variant="subtle"
+                        className="flex-1"
+                        onClick={()=> setPreview({ open:true, url: href, title: `Expense • ${new Date(x.date).toLocaleDateString()}` })}
+                      >
+                        View Document
+                      </Button>
+                    )
+                  })()
+                ) : (
+                  <span className="text-gray-400 text-sm flex-1">No proof</span>
+                )}
+                <Button variant="danger" className="flex-1" onClick={()=>deleteExpense(x._id)}>Delete</Button>
+              </div>
+            </div>
+          ))}
+          {items.length===0 && (
+            <div className="py-3 text-gray-500 text-sm text-center">No expenses</div>
+          )}
+        </div>
+
+        {/* Desktop/tablet: table */}
+        <div className="hidden sm:block overflow-x-auto">
+          <table className="w-full min-w-[720px] text-sm">
+            <thead>
+              <tr className="text-left text-gray-500">
+                <th className="py-2">Type</th>
+                <th>Amount</th>
+                <th>Date</th>
+                <th>Note</th>
+                <th>Proof</th>
+                <th className="text-right">Action</th>
               </tr>
-            ))}
-            {items.length===0 && <tr><td className="py-3 text-gray-500" colSpan={6}>No expenses</td></tr>}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {items.map(x => (
+                <tr key={x._id} className="border-t">
+                  <td className="py-2">{x.type}</td>
+                  <td>₹{x.amount}</td>
+                  <td>{new Date(x.date).toLocaleDateString()}</td>
+                  <td>{x.note||'-'}</td>
+                  <td>
+                    {x.proofUrl ? (
+                      (() => {
+                        const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
+                        const href = `${apiBase}${x.proofUrl}`
+                        return (
+                          <button
+                            type="button"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
+                            onClick={()=> setPreview({ open:true, url: href, title: `Expense • ${new Date(x.date).toLocaleDateString()}` })}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                              <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
+                            </svg>
+                            View
+                          </button>
+                        )
+                      })()
+                    ) : '-'}
+                  </td>
+                  <td className="text-right whitespace-nowrap align-middle"><Button variant="danger" className="h-8 px-3" onClick={()=>deleteExpense(x._id)}>Delete</Button></td>
+                </tr>
+              ))}
+              {items.length===0 && <tr><td className="py-3 text-gray-500" colSpan={6}>No expenses</td></tr>}
+            </tbody>
+          </table>
+        </div>
       </Card>
     </div>
   )
