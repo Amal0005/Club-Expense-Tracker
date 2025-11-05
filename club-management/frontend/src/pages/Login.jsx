@@ -78,7 +78,9 @@ export default function Login() {
         </Card>
 
         <div className="text-center mt-4 text-xs text-gray-500">
-         
+          <p>
+            Having trouble logging in? Contact your club admin to reset your credentials.
+          </p>
         </div>
       </div>
     </div>

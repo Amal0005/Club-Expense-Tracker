@@ -2,6 +2,8 @@ import { useState } from 'react'
 import api from '../api/axios'
 import { useToast } from './ToastProvider'
 import { useConfirm } from './ConfirmProvider'
+import Upload from './ui/Upload.jsx'
+import Button from './ui/Button.jsx'
 
 export default function PaymentUpload({ onDone }) {
   const [month, setMonth] = useState('')
@@ -38,8 +40,8 @@ export default function PaymentUpload({ onDone }) {
     <form onSubmit={submit} className="flex flex-col gap-3">
       <div className="flex gap-3 items-center">
         <input type="month" className="border rounded px-3 py-2" value={month} onChange={e=>setMonth(e.target.value)} required />
-        <input type="file" accept="image/*,application/pdf" onChange={e=>setFile(e.target.files?.[0]||null)} />
-        <button disabled={loading} className="bg-gray-900 text-white px-4 py-2 rounded disabled:opacity-50">{loading?'Saving...':'Mark Paid'}</button>
+        <Upload accept="image/*,application/pdf" value={file} onChange={setFile} buttonText="Attach Proof" />
+        <Button disabled={loading}>{loading?'Saving...':'Mark Paid'}</Button>
       </div>
       {msg && <p className="text-sm text-gray-600">{msg}</p>}
     </form>

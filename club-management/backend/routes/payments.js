@@ -50,14 +50,23 @@ router.post('/submit', upload.single('proof'), async (req, res, next) => {
       return res.status(400).json({ message: 'month must be in format YYYY-MM' });
     }
     const user = await User.findById(req.user.id);
-    let finalAmount = amount !== undefined && amount !== null && String(amount) !== '' ? Number(amount) : user.fixedAmount;
-    if (!Number.isFinite(finalAmount) || finalAmount <= 0) {
-      return res.status(400).json({ message: 'amount must be a positive number' });
+    const existing = await Payment.findOne({ user: req.user.id, month });
+    let finalAmount;
+    const provided = amount !== undefined && amount !== null && String(amount) !== '' ? Number(amount) : undefined;
+    if (Number.isFinite(provided) && provided > 0) {
+      finalAmount = provided;
+    } else if (existing && Number.isFinite(existing.amount) && existing.amount > 0) {
+      finalAmount = existing.amount;
+    } else if (Number.isFinite(user.fixedAmount) && user.fixedAmount > 0) {
+      finalAmount = user.fixedAmount;
+    } else {
+      // default gracefully when no positive amount is known; admin can adjust on approval
+      finalAmount = 0;
     }
 
     const update = {
       amount: finalAmount,
-      status: 'completed',
+      status: 'pending',
       proofPath: req.file ? `/uploads/${req.file.filename}` : undefined
     };
     const payment = await Payment.findOneAndUpdate(
@@ -101,15 +110,19 @@ router.patch('/:id/mark', auth, requireRole('admin'), async (req, res, next) => 
     if (!['pending', 'completed'].includes(status)) {
       return res.status(400).json({ message: 'status must be "pending" or "completed"' });
     }
+    const current = await Payment.findById(req.params.id);
+    if (!current) return res.status(404).json({ message: 'Payment not found' });
+    if (current.status === 'completed' && status === 'pending') {
+      return res.status(400).json({ message: 'Completed payments cannot be changed back to pending' });
+    }
     const update = { status };
     if (amount !== undefined) {
       const n = Number(amount);
       if (!Number.isFinite(n) || n <= 0) return res.status(400).json({ message: 'amount must be a positive number' });
       update.amount = n;
     }
-    const payment = await Payment.findByIdAndUpdate(req.params.id, update, { new: true });
-    if (!payment) return res.status(404).json({ message: 'Payment not found' });
-    res.json(payment);
+    const updated = await Payment.findByIdAndUpdate(req.params.id, update, { new: true });
+    res.json(updated);
   } catch (e) { next(e); }
 });
 

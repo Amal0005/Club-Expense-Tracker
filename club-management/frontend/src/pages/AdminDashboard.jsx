@@ -61,7 +61,18 @@ export default function AdminDashboard() {
   return (
     <div className="space-y-6">
       {/* Header */}
-     
+      <div className="bg-white rounded-xl border border-gray-100 shadow-sm p-5">
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="text-xl font-semibold text-gray-900">Admin Overview</h1>
+            <p className="text-sm text-gray-600 mt-1">Track users, payments, and club expenses at a glance.</p>
+          </div>
+          <div className="text-right text-xs text-gray-500">
+            <div>Last updated</div>
+            <div className="font-medium text-gray-800">{new Date().toLocaleString()}</div>
+          </div>
+        </div>
+      </div>
 
       {/* Stat Cards */}
       <div className="grid md:grid-cols-5 gap-4">

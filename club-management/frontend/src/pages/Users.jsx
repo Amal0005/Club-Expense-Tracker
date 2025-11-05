@@ -5,6 +5,8 @@ import { useConfirm } from '../components/ConfirmProvider'
 import Card from '../components/ui/Card.jsx'
 import Input from '../components/ui/Input.jsx'
 import Button from '../components/ui/Button.jsx'
+import Upload from '../components/ui/Upload.jsx'
+import DocumentPreviewModal from '../components/DocumentPreviewModal.jsx'
 
 export default function Users() {
   const [users, setUsers] = useState([])
@@ -19,6 +21,7 @@ export default function Users() {
   const [payments, setPayments] = useState([])
   const [newPassword, setNewPassword] = useState('')
   const [savingPw, setSavingPw] = useState(false)
+  const [preview, setPreview] = useState({ open:false, url:'', title:'' })
 
   const load = async () => {
     try {
@@ -117,7 +120,7 @@ export default function Users() {
           <Input placeholder="Email" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} />
           <Input placeholder="Password" type="password" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} />
           <Input placeholder="Fixed Amount" type="number" value={form.fixedAmount} onChange={e=>setForm({...form,fixedAmount:Number(e.target.value)})} />
-          <Input type="file" accept="image/*" onChange={e=>setAvatarFile(e.target.files?.[0]||null)} />
+          <Upload accept="image/*" value={avatarFile} onChange={setAvatarFile} buttonText="Avatar" />
           <div className="flex gap-2">
             <select className="border rounded px-3 py-2 text-sm" value={form.role} onChange={e=>setForm({...form,role:e.target.value})}>
               <option value="user">User</option>
@@ -196,6 +199,7 @@ export default function Users() {
               </div>
               <Button variant="ghost" onClick={()=>setShowModal(false)}>Close</Button>
             </div>
+            <DocumentPreviewModal open={preview.open} url={preview.url} title={preview.title} onClose={()=>setPreview({ open:false, url:'', title:'' })} />
             <div className="p-4 grid md:grid-cols-2 gap-4">
               <div className="border rounded-lg p-4">
                 <div className="text-gray-500 text-xs">Dues Summary (Current Year)</div>
@@ -234,6 +238,62 @@ export default function Users() {
                   <Button disabled={savingPw} onClick={updatePassword}>{savingPw? 'Saving...' : 'Update'}</Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-2">Note: For security, current passwords are not viewable. Set a new one for the user.</p>
+              </div>
+            </div>
+            <div className="px-4 pb-4">
+              <div className="border rounded-lg p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <div className="text-gray-500 text-xs">Payments</div>
+                  <div className="text-xs text-gray-400">{payments.length} record(s)</div>
+                </div>
+                <div className="max-h-64 overflow-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-gray-500">
+                        <th className="py-1">Month</th>
+                        <th>Amount</th>
+                        <th>Status</th>
+                        <th className="text-right">Proof</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {payments.map(p => (
+                        <tr key={p._id || p.month} className="border-t">
+                          <td className="py-1">{p.month}</td>
+                          <td>₹{p.amount}</td>
+                          <td>
+                            <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs border ${p.status==='completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-amber-50 text-amber-700 border-amber-200'}`}>
+                              {p.status==='completed' ? 'Completed' : 'Pending'}
+                            </span>
+                          </td>
+                          <td className="text-right whitespace-nowrap align-middle">
+                            {p.proofPath ? (
+                              (() => {
+                                const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
+                                const href = `${apiBase}${p.proofPath}`
+                                return (
+                                  <button
+                                    type="button"
+                                    className="inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
+                                    onClick={()=> setPreview({ open:true, url: href, title: `${selected.name} • ${p.month}` })}
+                                  >
+                                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5"><path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" /></svg>
+                                    View Document
+                                  </button>
+                                )
+                              })()
+                            ) : (
+                              <span className="text-gray-400">-</span>
+                            )}
+                          </td>
+                        </tr>
+                      ))}
+                      {payments.length===0 && (
+                        <tr><td className="py-2 text-gray-500" colSpan={4}>No payments</td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
           </div>

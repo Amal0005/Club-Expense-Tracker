@@ -3,6 +3,7 @@ import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
 import nodemailer from 'nodemailer';
+import { auth } from '../middleware/auth.js';
 
 const router = express.Router();
 
@@ -63,6 +64,15 @@ router.post('/login', async (req, res, next) => {
     if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });
     res.json({ token, user: { id: user._id, name: user.name, role: user.role, fixedAmount: user.fixedAmount, avatarUrl: user.avatarUrl } });
+  } catch (e) { next(e); }
+});
+
+// Get current user using token
+router.get('/me', auth, async (req, res, next) => {
+  try {
+    const user = await User.findById(req.user.id).select('name role fixedAmount avatarUrl');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ id: user._id, name: user.name, role: user.role, fixedAmount: user.fixedAmount, avatarUrl: user.avatarUrl });
   } catch (e) { next(e); }
 });
 

@@ -5,6 +5,8 @@ import { useConfirm } from '../components/ConfirmProvider'
 import Card from '../components/ui/Card.jsx'
 import Input from '../components/ui/Input.jsx'
 import Button from '../components/ui/Button.jsx'
+import Upload from '../components/ui/Upload.jsx'
+import DocumentPreviewModal from '../components/DocumentPreviewModal.jsx'
 
 export default function Expenses() {
   const [items, setItems] = useState([])
@@ -13,6 +15,7 @@ export default function Expenses() {
   const [msg, setMsg] = useState('')
   const toast = useToast()
   const { confirm } = useConfirm()
+  const [preview, setPreview] = useState({ open:false, url:'', title:'' })
 
   const load = async () => {
     try {
@@ -73,17 +76,14 @@ export default function Expenses() {
           <Input className="h-10" placeholder="Amount" type="number" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})} />
           <Input className="h-10" type="date" value={form.date} onChange={e=>setForm({...form,date:e.target.value})} />
           <Input className="h-10" placeholder="Note (optional)" value={form.note} onChange={e=>setForm({...form,note:e.target.value})} />
-          <div className="flex items-center gap-2 min-w-0">
-            <input id="proof" type="file" accept="image/*,application/pdf" className="hidden" onChange={e=>setProofFile(e.target.files?.[0]||null)} />
-            <Button as="label" htmlFor="proof" variant="subtle" className="h-10 px-3">Upload</Button>
-            <span className="text-xs text-gray-600 truncate" title={proofFile?.name || ''}>{proofFile?.name || 'No file selected'}</span>
-          </div>
+          <Upload accept="image/*,application/pdf" value={proofFile} onChange={setProofFile} buttonText="Upload" className="h-10" />
           <Button className="h-10">Add</Button>
         </form>
       </Card>
 
       <Card className="p-4">
         <h2 className="font-semibold mb-3">Recent Expenses</h2>
+        <DocumentPreviewModal open={preview.open} url={preview.url} title={preview.title} onClose={()=>setPreview({ open:false, url:'', title:'' })} />
         <table className="w-full text-sm">
           <thead>
             <tr className="text-left text-gray-500">
@@ -108,17 +108,16 @@ export default function Expenses() {
                       const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
                       const href = `${apiBase}${x.proofUrl}`
                       return (
-                        <a
+                        <button
+                          type="button"
                           className="inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
-                          href={href}
-                          target="_blank"
-                          rel="noreferrer"
+                          onClick={()=> setPreview({ open:true, url: href, title: `Expense • ${new Date(x.date).toLocaleDateString()}` })}
                         >
                           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                             <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                           </svg>
                           View
-                        </a>
+                        </button>
                       )
                     })()
                   ) : '-'}
