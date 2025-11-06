@@ -32,7 +32,7 @@ async function ensureAdmin() {
 }
 await ensureAdmin();
 
-app.use(cors({ origin: process.env.CLIENT_ORIGIN, credentials: true }));
+app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
