@@ -66,8 +66,10 @@ export default function UserDashboard() {
   const dueCount = visibleMonths.filter(m => compareMonthKey(m, currentMonthKey) < 0 && !(paidMap.has(m) && paidMap.get(m).status === 'completed')).length
   const totalDue = (user?.fixedAmount || 0) * dueCount
 
-  const paidMonthsThisYear = months.filter(m => paidMap.has(m) && paidMap.get(m)?.status === 'completed').length
-  const yearProgressPct = Math.round((paidMonthsThisYear / 12) * 100)
+  // Progress should be based on months since user's join month (within this year)
+  const nVisibleMonths = visibleMonths.length
+  const paidMonthsVisible = visibleMonths.filter(m => paidMap.has(m) && paidMap.get(m)?.status === 'completed').length
+  const yearProgressPct = nVisibleMonths > 0 ? Math.round((paidMonthsVisible / nVisibleMonths) * 100) : 0
   const totalPaidThisYear = payments
     .filter(p => (p.status === 'completed') && String(p.month || '').startsWith(String(currentYear)))
     .reduce((sum, p) => sum + (Number(p.amount) || 0), 0)
@@ -103,7 +105,7 @@ export default function UserDashboard() {
         </div>
         <div className="mt-4">
           <div className="flex items-center justify-between text-xs text-gray-500">
-            <span>{paidMonthsThisYear}/12 months paid</span>
+            <span>{paidMonthsVisible}/{nVisibleMonths} months paid</span>
             <span>{yearProgressPct}%</span>
           </div>
           <div className="mt-1 h-2 rounded-full bg-gray-100 overflow-hidden">

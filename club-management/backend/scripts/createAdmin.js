@@ -14,7 +14,7 @@ async function main() {
 
   const name = params.name || 'Admin'
   const username = (params.username || 'admin').toLowerCase()
-  const password = params.password || 'Admin2Nanma123'
+  const password = params.password || 'Admin@Nanma123'
   const role = 'admin'
 
   if (!process.env.MONGO_URI) {

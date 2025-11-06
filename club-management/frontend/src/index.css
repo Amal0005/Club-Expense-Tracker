@@ -1,3 +1,13 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/* Disable scroll only on small screens when the class is present on body */
+@media (max-width: 640px) {
+  body.no-scroll-mobile {
+    overflow: hidden;
+    height: 100vh; /* ensure viewport height cap */
+    overscroll-behavior: none;
+    touch-action: none;
+  }
+}

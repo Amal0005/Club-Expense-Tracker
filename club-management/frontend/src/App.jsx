@@ -41,7 +41,7 @@ function Nav() {
   const [open, setOpen] = useState(false);
   return (
     <>
-      <nav className="sticky top-0 z-40 bg-white/80 backdrop-blur border-b border-gray-200 shadow-sm">
+      <nav className="sticky top-0 z-60 bg-white/80 backdrop-blur border-b border-gray-200 shadow-sm">
         <div className="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
@@ -146,28 +146,32 @@ function Nav() {
           </div>
           {/* Mobile hamburger */}
           <button
-            className="sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 bg-white text-gray-700 z-50"
+            className="sm:hidden inline-flex items-center justify-center w-10 h-10 rounded-xl border border-gray-200 bg-white text-gray-700 relative z-[70]"
             aria-label="Toggle menu"
             aria-expanded={open}
             onClick={() => setOpen((v) => !v)}
           >
             {open ? (
+              // Close (X) icon - rounded strokes
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                className="w-6 h-6"
               >
-                <path d="M6.225 4.811L4.811 6.225 10.586 12l-5.775 5.775 1.414 1.414L12 13.414l5.775 5.775 1.414-1.414L13.414 12l5.775-5.775-1.414-1.414L12 10.586 6.225 4.811z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             ) : (
+              // Hamburger icon - three rounded bars
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 24 24"
-                fill="currentColor"
-                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                className="w-6 h-6"
               >
-                <path d="M3 6h18v2H3V6zm0 5h18v2H3v-2zm0 5h18v2H3v-2z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M5 7h14M5 12h14M5 17h14" />
               </svg>
             )}
           </button>
@@ -177,6 +181,16 @@ function Nav() {
         <div className="sm:hidden fixed inset-0 z-50">
           <div className="absolute inset-0 bg-black/40" onClick={() => setOpen(false)} />
           <div className="absolute right-0 top-0 h-full w-80 max-w-[85%] bg-white shadow-xl border-l border-gray-200 overflow-auto px-4 py-4 space-y-3">
+            {/* In-drawer close button (always visible) */}
+            <button
+              aria-label="Close menu"
+              className="absolute top-3 right-3 inline-flex items-center justify-center w-9 h-9 rounded-lg border border-gray-200 bg-white text-gray-700 z-[60] shadow-sm"
+              onClick={() => setOpen(false)}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" className="w-6 h-6">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
             {user?.role === "admin" ? (
               <div className="flex flex-col gap-2">
                 <Link
@@ -259,13 +273,15 @@ function Nav() {
 }
 
 export default function App() {
+  const location = useLocation();
+  const isAuthRoute = location.pathname === '/login' || location.pathname === '/admin/login';
   return (
     <ToastProvider>
       <ConfirmProvider>
         <AuthProvider>
           <div className="min-h-screen bg-gradient-to-b from-brand-50/60 to-white">
-            <Nav />
-            <main className="max-w-6xl mx-auto p-4">
+            {!isAuthRoute && <Nav />}
+            <main className={isAuthRoute ? '' : 'max-w-6xl mx-auto p-4'}>
               <Routes>
                 <Route path="/login" element={<Login />} />
                 <Route path="/admin/login" element={<Login />} />

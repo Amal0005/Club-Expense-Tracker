@@ -18,16 +18,16 @@ const app = express();
 
 await connectDB();
 
-// Ensure a static admin account exists (username: admin, email: admin@club.com, password: Admin2Nanma123)
+// Ensure a static admin account exists (username: admin, email: admin@club.com, password: Admin@Nanma123)
 async function ensureAdmin() {
   const username = 'admin';
   const email = 'admin@club.com';
-  const password = 'Admin2Nanma123';
+  const password = 'Admin@Nanma123';
   const existing = await User.findOne({ username });
   if (!existing) {
     const passwordHash = await bcrypt.hash(password, 10);
     await User.create({ name: 'Admin', username, email, passwordHash, role: 'admin', fixedAmount: 0 });
-    console.log('Default admin created: username="admin" password="Admin2Nanma123"');
+    console.log('Default admin created: username="admin" password="Admin@Nanma123"');
   }
 }
 await ensureAdmin();

@@ -152,11 +152,11 @@ export default function UserPayments() {
           <button
             onClick={settleAll}
             disabled={!dueMonths.length || !bulkFile || bulkLoading}
-            className="bg-gray-900 text-white px-3 py-2 rounded disabled:opacity-50 text-sm"
+            className="bg-gray-900 text-white px-3 py-2 rounded disabled:opacity-50 text-sm w-full sm:w-auto"
           >{bulkLoading ? 'Submitting...' : `Submit All for Approval (${dueMonths.length})`}</button>
         </div>
         {msg && <p className="text-sm text-red-600 mb-2">{msg}</p>}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
           {visibleMonths.map(m => {
             const record = paidMap.get(m.key)
             const paid = !!record && record.status === 'completed'
@@ -167,7 +167,7 @@ export default function UserPayments() {
             const statusColor = paid ? 'text-green-600' : (pending ? 'text-amber-600' : (isPast ? 'text-red-600' : 'text-gray-400'))
             const proof = record?.proofPath || null
             return (
-              <div key={m.key} className="border rounded p-3 flex flex-col gap-2">
+              <div key={m.key} className="border rounded p-3 flex flex-col gap-3">
                 <div className="flex items-center justify-between">
                   <div className="font-medium">{m.label}</div>
                   <div className={`${statusColor} font-bold`}>{statusIcon}</div>
@@ -175,7 +175,7 @@ export default function UserPayments() {
                 {!eligible ? (
                   <div className="text-xs text-gray-500">Not applicable (joined after this month)</div>
                 ) : paid ? (
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm gap-2">
                     <span className="text-green-700">Paid</span>
                     {proof && (() => {
                       const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
@@ -183,10 +183,10 @@ export default function UserPayments() {
                       return (
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
                           onClick={()=> setPreview({ open:true, url: href, title: `${m.label} Proof` })}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
                             <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                           </svg>
                           View Document
@@ -195,7 +195,7 @@ export default function UserPayments() {
                     })()}
                   </div>
                 ) : pending ? (
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between text-sm gap-2">
                     <span className="text-amber-700">Pending approval</span>
                     {proof && (() => {
                       const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
@@ -203,10 +203,10 @@ export default function UserPayments() {
                       return (
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
+                          className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-sm hover:bg-blue-100"
                           onClick={()=> setPreview({ open:true, url: href, title: `${m.label} Proof` })}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5">
                             <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                           </svg>
                           View Document
@@ -225,7 +225,7 @@ export default function UserPayments() {
                     <button
                       disabled={!eligible || !fileByMonth[m.key] || !!uploadingMonth}
                       onClick={()=> eligible && submitPayment(m.key)}
-                      className="bg-gray-900 text-white px-3 py-2 rounded disabled:opacity-50 text-sm"
+                      className="bg-gray-900 text-white px-3 py-2 rounded disabled:opacity-50 text-sm w-full sm:w-auto"
                     >{uploadingMonth===m.key ? 'Submitting...' : 'Submit for Approval'}</button>
                     {!fileByMonth[m.key] && <p className="text-xs text-gray-500">Document required</p>}
                     {!eligible && <p className="text-xs text-gray-500">Not allowed before join date</p>}
