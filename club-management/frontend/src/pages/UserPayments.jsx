@@ -179,14 +179,14 @@ export default function UserPayments() {
                     <span className="text-green-700">Paid</span>
                     {proof && (() => {
                       const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                      const href = `${apiBase}${proof}`
+                      const href = /^https?:/.test(String(proof)) ? proof : `${apiBase}${proof}`
                       return (
                         <button
                           type="button"
-                          className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
+                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
                           onClick={()=> setPreview({ open:true, url: href, title: `${m.label} Proof` })}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                             <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                           </svg>
                           View Document
@@ -199,14 +199,14 @@ export default function UserPayments() {
                     <span className="text-amber-700">Pending approval</span>
                     {proof && (() => {
                       const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                      const href = `${apiBase}${proof}`
+                      const href = /^https?:/.test(String(proof)) ? proof : `${apiBase}${proof}`
                       return (
                         <button
                           type="button"
-                          className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-blue-700 text-sm hover:bg-blue-100"
+                          className="inline-flex items-center justify-center gap-1 w-full sm:w-auto px-2.5 py-1.5 rounded-md border border-blue-200 bg-blue-50 text-blue-700 text-xs hover:bg-blue-100"
                           onClick={()=> setPreview({ open:true, url: href, title: `${m.label} Proof` })}
                         >
-                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-4.5 h-4.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" className="w-3.5 h-3.5">
                             <path d="M12 5c-7 0-10 7-10 7s3 7 10 7 10-7 10-7-3-7-10-7Zm0 12a5 5 0 1 1 0-10 5 5 0 0 1 0 10Zm0-2.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                           </svg>
                           View Document

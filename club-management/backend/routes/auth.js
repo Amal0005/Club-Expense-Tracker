@@ -60,6 +60,7 @@ router.post('/login', async (req, res, next) => {
     const uname = String(username || '').toLowerCase();
     const user = await User.findOne({ username: uname });
     if (!user) return res.status(401).json({ message: 'Invalid credentials' });
+    if (user.isBlocked) return res.status(403).json({ message: 'Account is blocked. Contact admin.' });
     const ok = await bcrypt.compare(password, user.passwordHash);
     if (!ok) return res.status(401).json({ message: 'Invalid credentials' });
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET, { expiresIn: '7d' });

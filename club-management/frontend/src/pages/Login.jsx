@@ -192,19 +192,17 @@ export default function Login() {
                     'LOGIN'
                   )}
                 </button>
+                {!isAdminLogin && (
+                  <p className="mt-2 text-center text-xs text-slate-700/80">
+                    Facing any problem? Contact Admin.
+                  </p>
+                )}
               </div>
 
             </form>
           </div>
 
-          {/* User-only helper text */}
-          {!isAdminLogin && (
-            <div className="px-6 sm:px-10 pb-[env(safe-area-inset-bottom)] sm:pb-6 mt-2">
-              <p className="text-center text-sm text-slate-700/80">
-                Facing any problem? Contact Admin.
-              </p>
-            </div>
-          )}
+          {/* User-only helper text moved into sticky footer above */}
         </div>
       </div>
     </div>

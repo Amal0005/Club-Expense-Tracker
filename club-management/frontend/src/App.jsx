@@ -105,7 +105,7 @@ function Nav() {
                       /\/api$/,
                       ""
                     );
-                    const src = `${apiBase}${user.avatarUrl}`;
+                    const src = /^https?:/.test(String(user.avatarUrl)) ? user.avatarUrl : `${apiBase}${user.avatarUrl}`;
                     return (
                       <img
                         src={src}

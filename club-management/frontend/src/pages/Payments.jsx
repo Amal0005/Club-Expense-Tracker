@@ -81,7 +81,7 @@ export default function Payments() {
                 {p.user?.avatarUrl ? (
                   (() => {
                     const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                    const src = `${apiBase}${p.user.avatarUrl}`
+                    const src = /^https?:/.test(String(p.user.avatarUrl)) ? p.user.avatarUrl : `${apiBase}${p.user.avatarUrl}`
                     return <img src={src} alt={p.user?.name||''} className="w-10 h-10 rounded-full object-cover" />
                   })()
                 ) : (
@@ -123,7 +123,7 @@ export default function Payments() {
                     {p.proofPath ? (
                       (() => {
                         const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                        const href = `${apiBase}${p.proofPath}`
+                        const href = /^https?:/.test(String(p.proofPath)) ? p.proofPath : `${apiBase}${p.proofPath}`
                         return (
                           <Button
                             variant="subtle"
@@ -171,7 +171,7 @@ export default function Payments() {
                     {p.user?.avatarUrl ? (
                       (() => {
                         const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                        const src = `${apiBase}${p.user.avatarUrl}`
+                        const src = /^https?:/.test(String(p.user.avatarUrl)) ? p.user.avatarUrl : `${apiBase}${p.user.avatarUrl}`
                         return <img src={src} alt={p.user?.name||''} className="w-8 h-8 rounded-full object-cover" />
                       })()
                     ) : (
@@ -197,7 +197,7 @@ export default function Payments() {
                       {p.proofPath ? (
                         (() => {
                           const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                          const href = `${apiBase}${p.proofPath}`
+                          const href = /^https?:/.test(String(p.proofPath)) ? p.proofPath : `${apiBase}${p.proofPath}`
                           return (
                             <button
                               type="button"

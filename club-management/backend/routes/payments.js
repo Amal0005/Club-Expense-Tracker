@@ -1,21 +1,14 @@
 import express from 'express';
 import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { auth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/roles.js';
 import Payment from '../models/Payment.js';
 import User from '../models/User.js';
+import cloudinary from '../config/cloudinary.js';
 
 const router = express.Router();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-const storage = multer.diskStorage({
-  destination: path.join(__dirname, '..', 'uploads'),
-  filename: (_, file, cb) => cb(null, Date.now() + '-' + file.originalname)
-});
+const storage = multer.memoryStorage();
 const upload = multer({
   storage,
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
@@ -64,10 +57,23 @@ router.post('/submit', upload.single('proof'), async (req, res, next) => {
       finalAmount = 0;
     }
 
+    let proofUrl;
+    if (req.file) {
+      const buffer = req.file.buffer;
+      const originalname = req.file.originalname || 'payment-proof';
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'club-management/payments', resource_type: 'auto', filename_override: originalname, use_filename: true, unique_filename: true },
+          (error, r) => error ? reject(error) : resolve(r)
+        );
+        stream.end(buffer);
+      });
+      proofUrl = result?.secure_url;
+    }
     const update = {
       amount: finalAmount,
       status: 'pending',
-      proofPath: req.file ? `/uploads/${req.file.filename}` : undefined
+      proofPath: proofUrl || undefined
     };
     const payment = await Payment.findOneAndUpdate(
       { user: req.user.id, month },

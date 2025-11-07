@@ -112,7 +112,7 @@ export default function Expenses() {
                 {x.proofUrl ? (
                   (() => {
                     const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                    const href = `${apiBase}${x.proofUrl}`
+                    const href = /^https?:/.test(String(x.proofUrl)) ? x.proofUrl : `${apiBase}${x.proofUrl}`
                     return (
                       <Button
                         variant="subtle"
@@ -159,7 +159,7 @@ export default function Expenses() {
                     {x.proofUrl ? (
                       (() => {
                         const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                        const href = `${apiBase}${x.proofUrl}`
+                        const href = /^https?:/.test(String(x.proofUrl)) ? x.proofUrl : `${apiBase}${x.proofUrl}`
                         return (
                           <button
                             type="button"

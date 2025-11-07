@@ -221,7 +221,7 @@ export default function UserDashboard() {
                 {(e.proofUrl || e.proofPath) && (() => {
                   const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
                   const path = e.proofUrl || e.proofPath
-                  const href = `${apiBase}${path}`
+                  const href = /^https?:/.test(String(path)) ? path : `${apiBase}${path}`
                   return (
                     <button
                       type="button"

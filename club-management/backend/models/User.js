@@ -8,7 +8,8 @@ const userSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ['admin', 'user'], default: 'user' },
     fixedAmount: { type: Number, default: 0 },
-    avatarUrl: { type: String }
+    avatarUrl: { type: String },
+    isBlocked: { type: Boolean, default: false }
   },
   { timestamps: true }
 );

@@ -29,6 +29,24 @@ export default function Users() {
       setUsers(data)
     } catch (e) { setMsg(e.response?.data?.message || 'Failed to load') }
   }
+
+  const toggleBlock = async (u) => {
+    const makeBlocked = !u.isBlocked
+    const ok = await confirm({
+      title: makeBlocked ? 'Block user' : 'Unblock user',
+      message: `Are you sure you want to ${makeBlocked ? 'block' : 'unblock'} "${u.name}"?`,
+      confirmText: makeBlocked ? 'Block' : 'Unblock',
+      intent: makeBlocked ? 'danger' : undefined
+    })
+    if (!ok) return
+    try {
+      await api.patch(`/users/${u._id}/block`, { blocked: makeBlocked })
+      await load()
+      toast.success(makeBlocked ? 'User blocked' : 'User unblocked')
+    } catch (e) {
+      toast.error(e.response?.data?.message || 'Action failed')
+    }
+  }
   useEffect(() => { load() }, [])
 
   const createUser = async (e) => {
@@ -143,7 +161,7 @@ export default function Users() {
                 {u.avatarUrl ? (
                   (() => {
                     const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                    const src = `${apiBase}${u.avatarUrl}`
+                    const src = /^https?:/.test(String(u.avatarUrl)) ? u.avatarUrl : `${apiBase}${u.avatarUrl}`
                     return <img src={src} alt={u.name} className="w-10 h-10 rounded-full object-cover" />
                   })()
                 ) : (
@@ -176,6 +194,22 @@ export default function Users() {
 
               <div className="mt-3 flex items-center gap-2">
                 <Button variant="subtle" className="flex-1" onClick={()=>openDetails(u)}>Details</Button>
+                {/* Mobile-friendly Block/Unblock toggle */}
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={!u.isBlocked}
+                  aria-label={u.isBlocked ? 'Unblock user' : 'Block user'}
+                  onClick={()=>toggleBlock(u)}
+                  className={`relative inline-flex items-center shrink-0 w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${u.isBlocked ? 'bg-gray-700' : 'bg-emerald-400'}`}
+                >
+                  <span
+                    className={`absolute top-0 left-0 h-6 w-6 rounded-full bg-white shadow transform transition-transform duration-200 ${u.isBlocked ? 'translate-x-6' : 'translate-x-0'}`}
+                  />
+                  {!u.isBlocked && (
+                    <svg className="absolute left-1.5 top-1.5 w-3 h-3 text-emerald-700" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z"/></svg>
+                  )}
+                </button>
                 <Button variant="danger" className="flex-1" onClick={()=>deleteUser(u._id)}>Delete</Button>
               </div>
             </div>
@@ -187,7 +221,7 @@ export default function Users() {
 
         {/* Desktop/tablet: table */}
         <div className="hidden sm:block -mx-2 sm:mx-0 overflow-x-auto">
-          <table className="w-full min-w-[720px] text-sm">
+          <table className="w-full min-w-[820px] text-sm">
           <thead>
             <tr className="text-left text-gray-500">
               <th className="py-2">Avatar</th>
@@ -196,6 +230,7 @@ export default function Users() {
               <th className="hidden sm:table-cell">Email</th>
               <th>Role</th>
               <th className="hidden sm:table-cell">Fixed Amount</th>
+              <th>Block</th>
               <th></th>
             </tr>
           </thead>
@@ -206,7 +241,7 @@ export default function Users() {
                   {u.avatarUrl ? (
                     (() => {
                       const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                      const src = `${apiBase}${u.avatarUrl}`
+                      const src = /^https?:/.test(String(u.avatarUrl)) ? u.avatarUrl : `${apiBase}${u.avatarUrl}`
                       return <img src={src} alt={u.name} className="w-8 h-8 rounded-full object-cover" />
                     })()
                   ) : (
@@ -224,6 +259,22 @@ export default function Users() {
                 <td className="hidden sm:table-cell">
                   <Input className="w-24" type="number" defaultValue={u.fixedAmount||0} onBlur={e=>updateUser(u._id,{ fixedAmount: Number(e.target.value) })} />
                 </td>
+                <td className="align-middle">
+                  {/* Desktop/tablet toggle */}
+                  <button
+                    type="button"
+                    role="switch"
+                    aria-checked={!u.isBlocked}
+                    aria-label={u.isBlocked ? 'Unblock user' : 'Block user'}
+                    onClick={()=>toggleBlock(u)}
+                    className={`relative inline-flex items-center w-12 h-6 rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${u.isBlocked ? 'bg-gray-700' : 'bg-emerald-400'}`}
+                  >
+                    <span className={`absolute top-0 left-0 h-6 w-6 rounded-full bg-white shadow transform transition-transform duration-200 ${u.isBlocked ? 'translate-x-6' : 'translate-x-0'}`} />
+                    {!u.isBlocked && (
+                      <svg className="absolute left-1.5 top-1.5 w-3 h-3 text-emerald-700" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.2l-3.5-3.5L4 14.2l5 5 11-11-1.5-1.5z"/></svg>
+                    )}
+                  </button>
+                </td>
                 <td className="text-right whitespace-nowrap align-middle">
                   <div className="inline-flex items-center gap-2">
                     <Button variant="subtle" className="h-8 px-3" onClick={()=>openDetails(u)}>Details</Button>
@@ -233,7 +284,7 @@ export default function Users() {
               </tr>
             ))}
             {filteredUsers.length===0 && (
-              <tr><td className="py-3 text-gray-500" colSpan={7}>No users</td></tr>
+              <tr><td className="py-3 text-gray-500" colSpan={8}>No users</td></tr>
             )}
           </tbody>
           </table>
@@ -342,7 +393,7 @@ export default function Users() {
                             {p.proofPath ? (
                               (() => {
                                 const apiBase = (api.defaults.baseURL || '').replace(/\/api$/, '')
-                                const href = `${apiBase}${p.proofPath}`
+                                const href = /^https?:/.test(String(p.proofPath)) ? p.proofPath : `${apiBase}${p.proofPath}`
                                 return (
                                   <button
                                     type="button"

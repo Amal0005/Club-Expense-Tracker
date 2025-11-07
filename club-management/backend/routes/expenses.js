@@ -3,21 +3,12 @@ import { auth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/roles.js';
 import Expense from '../models/Expense.js';
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
+import cloudinary from '../config/cloudinary.js';
 
 const router = express.Router();
 
-// Setup multer storage for proof uploads
-const uploadDir = path.resolve('uploads/expenses');
-fs.mkdirSync(uploadDir, { recursive: true });
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, uploadDir),
-  filename: (req, file, cb) => {
-    const safeName = file.originalname.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    cb(null, `${Date.now()}_${safeName}`);
-  }
-});
+// Use memory storage; upload to Cloudinary
+const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
   const allowed = ['image/jpeg','image/png','image/gif','application/pdf','image/webp'];
   if (allowed.includes(file.mimetype)) cb(null, true); else cb(new Error('Only images or PDF are allowed'));
@@ -52,7 +43,19 @@ router.post('/', upload.single('proof'), async (req, res, next) => {
     if (!Number.isFinite(amt) || amt <= 0) return res.status(400).json({ message: 'amount must be a positive number' });
     const d = new Date(date);
     if (isNaN(d.getTime())) return res.status(400).json({ message: 'date must be a valid date' });
-    const proofUrl = req.file ? `/uploads/expenses/${req.file.filename}` : undefined;
+    let proofUrl;
+    if (req.file) {
+      const buffer = req.file.buffer;
+      const originalname = req.file.originalname || 'expense-proof';
+      const result = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'club-management/expenses', resource_type: 'auto', filename_override: originalname, use_filename: true, unique_filename: true },
+          (error, r) => error ? reject(error) : resolve(r)
+        );
+        stream.end(buffer);
+      });
+      proofUrl = result?.secure_url;
+    }
     const expense = await Expense.create({ type: type.trim(), amount: amt, date: d, note, proofUrl });
     res.status(201).json(expense);
   } catch (e) { next(e); }

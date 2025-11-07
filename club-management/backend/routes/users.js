@@ -4,20 +4,11 @@ import { auth } from '../middleware/auth.js';
 import { requireRole } from '../middleware/roles.js';
 import bcrypt from 'bcrypt';
 import multer from 'multer';
-import fs from 'fs';
-import path from 'path';
+import cloudinary from '../config/cloudinary.js';
 
 const router = express.Router();
 
-const avatarDir = path.resolve('uploads/avatars');
-fs.mkdirSync(avatarDir, { recursive: true });
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, avatarDir),
-  filename: (req, file, cb) => {
-    const safe = file.originalname.replace(/[^a-zA-Z0-9_.-]/g, '_');
-    cb(null, `${Date.now()}_${safe}`);
-  }
-});
+const storage = multer.memoryStorage();
 const fileFilter = (req, file, cb) => {
   const ok = ['image/jpeg','image/png','image/gif','image/webp'].includes(file.mimetype);
   if (ok) cb(null, true); else cb(new Error('Only image files are allowed'));
@@ -67,7 +58,22 @@ router.post('/', upload.single('avatar'), async (req, res, next) => {
     }
     if (role && !['admin', 'user'].includes(role)) return res.status(400).json({ message: 'invalid role' });
     const passwordHash = await bcrypt.hash(password, 10);
-    const avatarUrl = req.file ? `/uploads/avatars/${req.file.filename}` : undefined;
+    let avatarUrl;
+    if (req.file) {
+      const buffer = req.file.buffer;
+      const originalname = req.file.originalname || 'avatar';
+      const uploadResult = await new Promise((resolve, reject) => {
+        const stream = cloudinary.uploader.upload_stream(
+          { folder: 'club-management/avatars', resource_type: 'image', filename_override: originalname, use_filename: true, unique_filename: true },
+          (error, result) => {
+            if (error) return reject(error);
+            resolve(result);
+          }
+        );
+        stream.end(buffer);
+      });
+      avatarUrl = uploadResult?.secure_url;
+    }
     const user = await User.create({ name, username: uname, email: emailLower, passwordHash, fixedAmount, role: role || 'user', avatarUrl });
     res.status(201).json({ id: user._id });
   } catch (e) { next(e); }
@@ -103,6 +109,19 @@ router.patch('/:id', async (req, res, next) => {
     }
     const user = await User.findByIdAndUpdate(req.params.id, update, { new: true });
     res.json(user);
+  } catch (e) { next(e); }
+});
+
+router.patch('/:id/block', async (req, res, next) => {
+  try {
+    const { blocked } = req.body;
+    const val = blocked === true || blocked === 'true' || blocked === 1 || blocked === '1';
+    if (String(req.params.id) === String(req.user.id) && val) {
+      return res.status(400).json({ message: 'You cannot block your own account' });
+    }
+    const user = await User.findByIdAndUpdate(req.params.id, { isBlocked: val }, { new: true }).select('-passwordHash');
+    if (!user) return res.status(404).json({ message: 'User not found' });
+    res.json({ message: val ? 'User blocked' : 'User unblocked', user });
   } catch (e) { next(e); }
 });
 
